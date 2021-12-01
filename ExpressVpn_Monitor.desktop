@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Exec=systemctl --user start startExpressVpn_Monitor.service
+X-GNOME-Autostart-enabled=true
+Icon=/opt/Vpn_Monitor/vpn_working.png
+Name=Express-vpn Monitor
+Comment=Monitor and control Expressvpn
