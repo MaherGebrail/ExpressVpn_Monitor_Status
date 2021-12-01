@@ -49,9 +49,10 @@ class ExpressStatus:
         
         gtk.main()
 
-    def do_func(self, _, word):
+    def do_func(self, _, func):
+    
         if self.app_exist:
-            eval(f"self.{word}(_)")
+            eval(f"self.{func}()")
         else:
             notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app", None).show()
 
@@ -77,16 +78,16 @@ class ExpressStatus:
             time.sleep(3)
 
     @staticmethod
-    def express_status(_):
+    def express_status():
         s = os.popen("expressvpn status").readlines()[0].replace('\x1b[1;32;49m', '')
         notify.Notification.new(f"ExpressVpn Status", s, None).show()
 
     @staticmethod
-    def connect_smart(_):
+    def connect_smart():
         os.system("expressvpn connect")
 
     @staticmethod
-    def connect_stop(_):
+    def connect_stop():
         os.system("expressvpn disconnect")
 
     @staticmethod
@@ -99,7 +100,7 @@ class ExpressStatus:
         menu = gtk.Menu()
 
         status_btn = gtk.MenuItem(label='Express status')
-        status_btn.connect('activate', self.express_status)
+        status_btn.connect('activate', self.do_func,'express_status')
 
         connect_smart_btn = gtk.MenuItem(label='Express Connect')
         connect_smart_btn.connect('activate', self.do_func, 'connect_smart')
