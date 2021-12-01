@@ -49,6 +49,12 @@ class ExpressStatus:
         
         gtk.main()
 
+    def do_func(self, _, word):
+        if self.app_exist:
+            eval(f"self.{word}(_)")
+        else:
+            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app", None).show()
+
     def check_existence(self):
         while True:
             self.app_exist = os.system("expressvpn status") == 0
@@ -70,35 +76,24 @@ class ExpressStatus:
                     self.indicator.set_icon(working_image)
             time.sleep(3)
 
-    def express_status(self, _):
-        if self.app_exist:
-            s = os.popen("expressvpn status").readlines()[0].replace('\x1b[1;32;49m', '')
-            notify.Notification.new(f"ExpressVpn Status", s, None).show()
-        else:
-            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app", None).show()
+    @staticmethod
+    def express_status(_):
+        s = os.popen("expressvpn status").readlines()[0].replace('\x1b[1;32;49m', '')
+        notify.Notification.new(f"ExpressVpn Status", s, None).show()
 
-    def connect_smart(self, _):
-        if not self.app_exist:
-            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app",
-                                    None).show()
-            return
-
+    @staticmethod
+    def connect_smart(_):
         os.system("expressvpn connect")
 
-    def connect_stop(self, _):
-        if not self.app_exist:
-            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app",
-                                    None).show()
-            return
+    @staticmethod
+    def connect_stop(_):
         os.system("expressvpn disconnect")
-
 
     @staticmethod
     def quit(_):
         notify.uninit()
         gtk.main_quit()
         exit(0)
-
 
     def build_menu(self):
         menu = gtk.Menu()
@@ -107,10 +102,10 @@ class ExpressStatus:
         status_btn.connect('activate', self.express_status)
 
         connect_smart_btn = gtk.MenuItem(label='Express Connect')
-        connect_smart_btn.connect('activate', self.connect_smart)
+        connect_smart_btn.connect('activate', self.do_func, 'connect_smart')
 
         connect_stop_btn = gtk.MenuItem(label='Express Disable')
-        connect_stop_btn.connect('activate', self.connect_stop)
+        connect_stop_btn.connect('activate', self.do_func, "connect_stop")
 
         quit_btn = gtk.MenuItem(label='quit')
         quit_btn.connect('activate', self.quit)
