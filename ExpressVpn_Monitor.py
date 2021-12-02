@@ -3,6 +3,7 @@ import os
 import time
 import gi
 import signal
+import re
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("AppIndicator3", "0.1")
@@ -52,7 +53,10 @@ class ExpressStatus:
     def do_func(self, _, func):
     
         if self.app_exist:
-            eval(f"self.{func}()")
+            do_chosen_fun = threading.Thread(target=eval(f"self.{func}"))
+            do_chosen_fun.daemon = True
+            do_chosen_fun.start()
+
         else:
             notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app", None).show()
 
@@ -66,7 +70,7 @@ class ExpressStatus:
 
     def check_status(self):
         while True:
-            s = os.popen("expressvpn status").readlines()[0].replace('\x1b[1;32;49m', '')
+            s = strip_ansi(os.popen("expressvpn status").readlines()[0])
             img_exist = self.indicator.get_icon()
 
             if "Connected" not in s[:11]:
@@ -79,7 +83,7 @@ class ExpressStatus:
 
     @staticmethod
     def express_status():
-        s = os.popen("expressvpn status").readlines()[0].replace('\x1b[1;32;49m', '')
+        s = strip_ansi(os.popen("expressvpn status").readlines()[0])
         notify.Notification.new(f"ExpressVpn Status", s, None).show()
 
     @staticmethod
@@ -117,6 +121,12 @@ class ExpressStatus:
         menu.append(quit_btn)
         menu.show_all()
         return menu
+
+
+def strip_ansi(text):
+    ansi_escape3 = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]', flags=re.IGNORECASE)
+    text = ansi_escape3.sub('', text)
+    return text 
 
 
 if __name__ == "__main__":
