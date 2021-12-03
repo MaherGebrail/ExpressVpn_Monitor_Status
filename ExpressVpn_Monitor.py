@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import warnings
+warnings.filterwarnings('ignore')
+
 import os
 import time
 import gi
@@ -12,7 +15,6 @@ gi.require_version('Notify', '0.7')
 from gi.repository import Gtk as gtk
 from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Notify as notify
-
 
 import threading
 
@@ -44,21 +46,22 @@ class ExpressStatus:
         self.test_connectivity.daemon = True
         if self.app_exist:
             self.test_connectivity.start()
-        
+
         # To Avoid KeyboardInterrupt Error (Not Very Important)
         signal.signal(signal.SIGINT, signal.SIG_DFL)
-        
+
         gtk.main()
 
     def do_func(self, _, func):
-    
+
         if self.app_exist:
             do_chosen_fun = threading.Thread(target=eval(f"self.{func}"))
             do_chosen_fun.daemon = True
             do_chosen_fun.start()
 
         else:
-            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app", None).show()
+            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app",
+                                    None).show()
 
     def check_existence(self):
         while True:
@@ -70,15 +73,20 @@ class ExpressStatus:
 
     def check_status(self):
         while True:
-            s = strip_ansi(os.popen("expressvpn status").readlines()[0])
-            img_exist = self.indicator.get_icon()
+            # This exception only happens while updating, when the app was already has the permission to run, 
+            # then suddenly it loses the expressvpn cli. 
+            try:
+                s = strip_ansi(os.popen("expressvpn status").readlines()[0])
+                img_exist = self.indicator.get_icon()
 
-            if "Connected" not in s[:11]:
-                if img_exist != error_image:
-                    self.indicator.set_icon(error_image)
-            else:
-                if img_exist != working_image:
+                if not s.strip().startswith("Connected "):
+                    if img_exist != error_image:
+                        self.indicator.set_icon(error_image)
+                elif img_exist != working_image:
                     self.indicator.set_icon(working_image)
+            except IndexError:
+                os.system("systemctl --user restart startExpressVpn_Monitor.service")
+
             time.sleep(3)
 
     @staticmethod
@@ -104,7 +112,7 @@ class ExpressStatus:
         menu = gtk.Menu()
 
         status_btn = gtk.MenuItem(label='Express status')
-        status_btn.connect('activate', self.do_func,'express_status')
+        status_btn.connect('activate', self.do_func, 'express_status')
 
         connect_smart_btn = gtk.MenuItem(label='Express Connect')
         connect_smart_btn.connect('activate', self.do_func, 'connect_smart')
@@ -126,7 +134,7 @@ class ExpressStatus:
 def strip_ansi(text):
     ansi_escape3 = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]', flags=re.IGNORECASE)
     text = ansi_escape3.sub('', text)
-    return text 
+    return text
 
 
 if __name__ == "__main__":
