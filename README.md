@@ -4,7 +4,7 @@
 
 - As there is only browser extensions to see the vpn status or the command-line **For linux Users** .. which is painful to keep checking most of the time (if you are suspicious like me :grin:).
 
-- Since i find the browser extensions not the best choice for me .. so i find the solution is to keep the status of the app in the try-bar.
+- Since i find the browser extensions not the best choice for me .. so i find the solution is to keep the status of the app in the top-bar.
 
 > So HERE We are [I Tried it on **ubuntu** ] ..
 
