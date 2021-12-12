@@ -3,10 +3,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import os
+import subprocess
 import time
 import gi
 import signal
 import re
+from shutil import which
+
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("AppIndicator3", "0.1")
@@ -25,6 +28,26 @@ error_image = used_path + '/wrong.png'
 working_image = used_path + '/vpn_working.png'
 
 
+def get_status():
+    out, error = subprocess.Popen("expressvpn status", shell=True, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE).communicate()
+    out, error = strip_ansi(out.decode().strip()), strip_ansi(error.decode().strip())
+
+    if out:  # if program return output
+        return out.split("\n")[0]
+    elif cli_code():    # if program exist but returns error
+        return error.split("\n")[0]
+    # if program doesn't exist ..
+    # restart service, to keep checking for existence before status (to save checking process & clearer status).
+    else:
+        os.system("systemctl --user restart startExpressVpn_Monitor.service")
+
+
+def cli_code():
+    """check if app exists."""
+    return bool(which("expressvpn"))
+
+
 class ExpressStatus:
     def __init__(self):
 
@@ -36,7 +59,7 @@ class ExpressStatus:
         self.indicator.set_menu(self.build_menu())
 
         # check if expressvpn app exist
-        self.app_exist = os.system("expressvpn status") == 0
+        self.app_exist = cli_code()
         if not self.app_exist:
             self.test_app_existance = threading.Thread(target=self.check_existence)
             self.test_app_existance.daemon = True
@@ -65,7 +88,7 @@ class ExpressStatus:
 
     def check_existence(self):
         while True:
-            self.app_exist = os.system("expressvpn status") == 0
+            self.app_exist = cli_code()
             if self.app_exist:
                 self.test_connectivity.start()
                 break
@@ -73,25 +96,20 @@ class ExpressStatus:
 
     def check_status(self):
         while True:
-            # This exception only happens while updating, when the app was already has the permission to run, 
-            # then suddenly it loses the expressvpn cli. 
-            try:
-                s = strip_ansi(os.popen("expressvpn status").readlines()[0])
-                img_exist = self.indicator.get_icon()
+            s = get_status()
+            img_exist = self.indicator.get_icon()
 
-                if not s.strip().startswith("Connected "):
-                    if img_exist != error_image:
-                        self.indicator.set_icon(error_image)
-                elif img_exist != working_image:
-                    self.indicator.set_icon(working_image)
-            except IndexError:
-                os.system("systemctl --user restart startExpressVpn_Monitor.service")
+            if not s.strip().startswith("Connected "):
+                if img_exist != error_image:
+                    self.indicator.set_icon(error_image)
+            elif img_exist != working_image:
+                self.indicator.set_icon(working_image)
 
             time.sleep(3)
 
     @staticmethod
     def express_status():
-        s = strip_ansi(os.popen("expressvpn status").readlines()[0])
+        s = get_status()
         notify.Notification.new(f"ExpressVpn Status", s, None).show()
 
     @staticmethod
