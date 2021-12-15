@@ -18,7 +18,6 @@ rm check_list.py
 
 if [[ $pak == "install" ]]; then
     sudo apt update && sudo apt install gir1.2-appindicator3-0.1 python3-gi -y
-    #sudo apt-get install python3-gi
 fi
 
 # setting paths
@@ -43,8 +42,26 @@ if [ ! -d "/home/$user_name/.config/systemd/user" ];then
 	echo "Created ~/.config/systemd/user dir"
 fi
 
+#create service file
+cat > $service_file_name <<EOL
+[Unit]
+Description=ExpressVpn Monitoring
 
-# copy the service into it's dir
+[Service]
+Type=simple
+ExecStart=/opt/Vpn_Monitor/ExpressVpn_Monitor.py 
+
+[Install]
+WantedBy=default.target
+EOL
+
+# binding the service to gnome-session
+if [[ `systemctl --user is-active gnome-session-manager@ubuntu.service ` == "active" ]]; then 
+	sed -i "3 a ; NOTE : THIS LINE CAN BE IGNORED .. it's only usage to make sure that the service closes BEFORE being forced to fail when the pc is rebooting or shutting down and losing it's gui resources." $service_file_name
+	sed -i "4 a BindsTo=gnome-session-manager@ubuntu.service\n " $service_file_name
+fi
+
+# copy service file
 cp $service_file_name /home/$user_name/.config/systemd/user/
 
 # make the (app & service) files executable
@@ -58,7 +75,7 @@ systemctl --user daemon-reload
 systemctl --user start $service_file_name
 
 
-# add systemctl to start on startup apps from user ..> to avoid crashing before loading user gui
+# add service to start on startup apps from user ..> to avoid crashing before loading user gui
 if [ ! -d "/home/$user_name/.config/autostart" ];then
         mkdir /home/$user_name/.config/autostart
         echo "Created ~/.config/autostart"

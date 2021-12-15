@@ -1,9 +1,0 @@
-[Unit]
-Description=ExpressVpn Monitoring
-
-[Service]
-Type=simple
-ExecStart=/opt/Vpn_Monitor/ExpressVpn_Monitor.py 
-
-[Install]
-WantedBy=default.target
