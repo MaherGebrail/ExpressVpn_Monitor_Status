@@ -81,7 +81,9 @@ if [ ! -d "/home/$user_name/.config/autostart" ];then
         echo "Created ~/.config/autostart"
     fi
 cp ExpressVpn_Monitor.desktop /home/$user_name/.config/autostart/
-
+sed -i "4d" ExpressVpn_Monitor.desktop
+cp ExpressVpn_Monitor.desktop /home/$user_name/.local/share/applications/
+sed -i "3 a X-GNOME-Autostart-enabled=true" ExpressVpn_Monitor.desktop
 
 # check the service state
 if [[ `systemctl --user is-active $service_file_name` == "active" ]]; then 

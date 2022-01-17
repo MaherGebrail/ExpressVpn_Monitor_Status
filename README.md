@@ -12,14 +12,18 @@
 
   * mkdir Vpn_Monitor in /opt/ **+** add [app.py **+** icons] into it.
 
-  * copy service file into ~/.config/systemd/
+  * copy service file into ~/.config/systemd/user/
 
-  * copy startup desktop file into ~/.config/startup/
-* **ExpressVpn_Monitor.desktop** : run the app on startup.
+  * copy desktop file to:
+    * ~/.config/autostart/ **_to start the service with pc_**.
+    * ~/.local/share/applications/ **_to let user able to run it from applications if it is not running_**.
+
+
+* **ExpressVpn_Monitor.desktop** : Run the app on startup & from applications.
 
 * **startExpressVpn_Monitor.service** : install.sh creates it in process.
 
-* **ExpressVpn_Monitor.py** : The app Itself, which is the only thing you need if you want to run it by yourself as script.
+* **ExpressVpn_Monitor.py** : The app itself, which is the only thing you need if you want to run it by yourself as script.
 
 * **clean_install.sh** : It removes all the app's files from its different places.
 
