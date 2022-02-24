@@ -28,19 +28,29 @@ error_image = used_path + '/wrong.png'
 working_image = used_path + '/vpn_working.png'
 
 
+def get_text_needed(text):
+    out_lines = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if line and not line.startswith('-') and line not in out_lines:
+            out_lines.append(line)
+    return '\n'.join(out_lines)
+
+
 def get_status():
     out, error = subprocess.Popen("expressvpn status", shell=True, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE).communicate()
     out, error = strip_ansi(out.decode().strip()), strip_ansi(error.decode().strip())
-
-    if out:  # if program return output
-        return out.split("\n")[0]
+    if out:
+        return get_text_needed(out+'\n'+error)
     elif cli_code():    # if program exist but returns error
-        return error.split("\n")[0]
+        return get_text_needed(error)
     # if program doesn't exist ..
     # restart service, to keep checking for existence before status (to save checking process & clearer status).
     else:
         os.system("systemctl --user restart startExpressVpn_Monitor.service")
+        # close script in case it's not running as a service
+        os.kill(os.getpid(), signal.SIGINT)
 
 
 def cli_code():
@@ -83,8 +93,8 @@ class ExpressStatus:
             do_chosen_fun.start()
 
         else:
-            notify.Notification.new(f"ExpressVpn Status", "It Seems that Ur system doesn't have ExpressVpn app",
-                                    None).show()
+            notify.Notification.new(f"ExpressVpn Status", "It Seems that ExpressVpn-app doesn't Exist on the system",
+                                    working_image).show()
 
     def check_existence(self):
         while True:
@@ -96,10 +106,10 @@ class ExpressStatus:
 
     def check_status(self):
         while True:
-            s = get_status()
+            s = [line.strip().startswith("Connected ") for line in get_status().split('\n')]
             img_exist = self.indicator.get_icon()
 
-            if not s.strip().startswith("Connected "):
+            if True not in s:
                 if img_exist != error_image:
                     self.indicator.set_icon(error_image)
             elif img_exist != working_image:
@@ -110,7 +120,7 @@ class ExpressStatus:
     @staticmethod
     def express_status():
         s = get_status()
-        notify.Notification.new(f"ExpressVpn Status", s, None).show()
+        notify.Notification.new(f"ExpressVpn Status", s, working_image).show()
 
     @staticmethod
     def connect_smart():
