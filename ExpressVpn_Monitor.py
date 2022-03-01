@@ -1,66 +1,9 @@
 #!/usr/bin/env python3
-import warnings
-warnings.filterwarnings('ignore')
-
-import os
-import subprocess
-import time
-import gi
-import signal
-import re
-from shutil import which
-
-
-gi.require_version("Gtk", "3.0")
-gi.require_version("AppIndicator3", "0.1")
-gi.require_version('Notify', '0.7')
-
-from gi.repository import Gtk as gtk
-from gi.repository import AppIndicator3 as appindicator
-from gi.repository import Notify as notify
-
-import threading
-
-APPINDICATOR_ID = 'express'
-
-used_path = os.path.abspath(os.path.dirname(__file__))
-error_image = used_path + '/wrong.png'
-working_image = used_path + '/vpn_working.png'
-
-
-def get_text_needed(text):
-    out_lines = []
-    for line in text.split("\n"):
-        line = line.strip()
-        if line and not line.startswith('-') and line not in out_lines:
-            out_lines.append(line)
-    return '\n'.join(out_lines)
-
-
-def get_status():
-    out, error = subprocess.Popen("expressvpn status", shell=True, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE).communicate()
-    out, error = strip_ansi(out.decode().strip()), strip_ansi(error.decode().strip())
-    if out:
-        return get_text_needed(out+'\n'+error)
-    elif cli_code():    # if program exist but returns error
-        return get_text_needed(error)
-    # if program doesn't exist ..
-    # restart service, to keep checking for existence before status (to save checking process & clearer status).
-    else:
-        os.system("systemctl --user restart startExpressVpn_Monitor.service")
-        # close script in case it's not running as a service
-        os.kill(os.getpid(), signal.SIGINT)
-
-
-def cli_code():
-    """check if app exists."""
-    return bool(which("expressvpn"))
+from common_functions import *
 
 
 class ExpressStatus:
     def __init__(self):
-
         notify.init(APPINDICATOR_ID)
 
         self.indicator = appindicator.Indicator.new(APPINDICATOR_ID, error_image,
@@ -68,7 +11,13 @@ class ExpressStatus:
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.indicator.set_menu(self.build_menu())
 
-        # check if expressvpn app exist
+        # check existence of the app
+        self.existence_checker()
+
+        gtk.main()
+
+    def existence_checker(self):
+        """check first if the express-vpn app exist, And prepare the thread of checking the status of the app"""
         self.app_exist = cli_code()
         if not self.app_exist:
             self.test_app_existance = threading.Thread(target=self.check_existence)
@@ -80,23 +29,23 @@ class ExpressStatus:
         if self.app_exist:
             self.test_connectivity.start()
 
-        # To Avoid KeyboardInterrupt Error (Not Very Important)
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-        gtk.main()
-
     def do_func(self, _, func):
 
         if self.app_exist:
-            do_chosen_fun = threading.Thread(target=eval(f"self.{func}"))
-            do_chosen_fun.daemon = True
-            do_chosen_fun.start()
+            self.thread_fun(func)
 
         else:
             notify.Notification.new(f"ExpressVpn Status", "It Seems that ExpressVpn-app doesn't Exist on the system",
                                     working_image).show()
 
+    def thread_fun(self, func):
+        """It starts a thread for the input-func"""
+        do_chosen_fun = threading.Thread(target=eval(f"self.{func}"))
+        do_chosen_fun.daemon = True
+        do_chosen_fun.start()
+
     def check_existence(self):
+        """this function runs if the app doesn't exist, so it keeps checking and breaks if the app got installed"""
         while True:
             self.app_exist = cli_code()
             if self.app_exist:
@@ -105,8 +54,9 @@ class ExpressStatus:
             time.sleep(15)
 
     def check_status(self):
+        """This function checks the status of the connection of the app"""
         while True:
-            s = [line.strip().startswith("Connected ") for line in get_status().split('\n')]
+            s = app_output()
             img_exist = self.indicator.get_icon()
 
             if True not in s:
@@ -159,12 +109,16 @@ class ExpressStatus:
         return menu
 
 
-def strip_ansi(text):
-    ansi_escape3 = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]', flags=re.IGNORECASE)
-    text = ansi_escape3.sub('', text)
-    return text
-
-
 if __name__ == "__main__":
+    import gi
+
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("AppIndicator3", "0.1")
+    gi.require_version('Notify', '0.7')
+
+    from gi.repository import Gtk as gtk
+    from gi.repository import AppIndicator3 as appindicator
+    from gi.repository import Notify as notify
+
     ExpressStatus()
 
