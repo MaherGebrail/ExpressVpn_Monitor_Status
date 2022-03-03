@@ -124,6 +124,9 @@ sudo chown $user_name $app_path_name/*
 systemctl --user daemon-reload
 systemctl --user start $service_file_name
 
+# sleep for 3 seconds to make sure that the script is reading the right status of the service.
+sleep 3
+
 # check the service state
 if [[ `systemctl --user is-active $service_file_name` == "active" ]]; then
     echo "system `systemctl --user is-active $service_file_name` - Installation Completed .. Done .. BYE :)";
