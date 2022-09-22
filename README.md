@@ -45,3 +45,6 @@
 
 * **icon.ico**: same image as **'vpn_working.png'**, which is why it's generated while installing [qt]-app version ... it's different name purpose is to avoid error with **plyer - notification** lib.
 
+<hr>
+
+```If you want to enable the service without startup.desktop FILE .. uncomment check_display_availability function inside common_functions.py file - To avoid errors.```

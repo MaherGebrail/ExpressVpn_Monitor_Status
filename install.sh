@@ -83,20 +83,16 @@ fi
 cat > $service_file_name <<EOL
 [Unit]
 Description=ExpressVpn Monitoring
+FailureActionExitStatus=0
 
 [Service]
-Type=simple
 ExecStart=$app_path_name/$running_script
+Restart=on-failure
 
 [Install]
 WantedBy=default.target
 EOL
 
-# binding the service to gnome-session if available
-if [[ `systemctl --user is-active gnome-session-manager@ubuntu.service ` == "active" ]]; then
-	sed -i "3 a ; NOTE : THIS LINE CAN BE IGNORED .. it's only usage to make sure that the service closes BEFORE being forced to fail when the pc is rebooting or shutting down and losing it's gui resources." $service_file_name
-	sed -i "4 a BindsTo=gnome-session-manager@ubuntu.service\n " $service_file_name
-fi
 
 # copy service file
 cp $service_file_name /home/$user_name/.config/systemd/user/

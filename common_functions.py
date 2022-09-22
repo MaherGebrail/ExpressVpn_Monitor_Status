@@ -59,3 +59,25 @@ def get_status():
 def app_output():
     return [line.strip().startswith("Connected ") for line in get_status().split('\n')]
 
+
+def check_display_availability(gui_env_session: list):
+    """
+    This function checks if the vars of env that responsible of os gui loaded or not.
+    gui_env_session : a list of your env variables keys.
+    """
+    restart_service = False
+    
+    for env_key in gui_env_session:
+        if not os.environ.get(env_key):
+            restart_service = True
+            break
+    
+    if restart_service:
+        time.sleep(5)
+        subprocess.run(['systemctl', '--user', 'restart', 'startExpressVpn_Monitor'])
+
+# Uncomment the below function line if you want to enable the service without autostart file
+# make sure to change [gui_env_session] if you have a different env variable
+
+# gui_env_session_list = ['DISPLAY', 'XAUTHORITY']
+# check_display_availability(gui_env_session_list)
