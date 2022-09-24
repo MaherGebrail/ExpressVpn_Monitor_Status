@@ -83,16 +83,22 @@ fi
 cat > $service_file_name <<EOL
 [Unit]
 Description=ExpressVpn Monitoring
-FailureActionExitStatus=0
 
 [Service]
 ExecStart=$app_path_name/$running_script
 Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=default.target
 EOL
 
+
+# binding the service to graphical-session.target
+if [[ `systemctl --user is-active graphical-session.target ` == "active" ]]; then
+	sed -i "2 a BindsTo=graphical-session.target " $service_file_name
+	sed -i "3 a After=graphical-session.target " $service_file_name
+fi
 
 # copy service file
 cp $service_file_name /home/$user_name/.config/systemd/user/

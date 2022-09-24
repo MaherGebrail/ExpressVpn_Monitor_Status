@@ -47,4 +47,4 @@
 
 <hr>
 
-```If you want to enable the service without startup.desktop FILE .. uncomment check_display_availability function inside common_functions.py file - To avoid errors.```
+```If you want to enable the service without startup.desktop FILE .. you may uncomment check_display_availability function inside common_functions.py file - To avoid errors in systemd .. although you don't have to.```
