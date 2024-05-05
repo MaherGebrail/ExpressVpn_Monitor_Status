@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from ExpressVpn_Monitor import *
-
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PySide6.QtGui import QIcon, QAction
 from plyer import notification
@@ -8,7 +7,14 @@ from plyer import notification
 
 icon_image = os.path.join(used_path, 'icon.ico')
 
-
+def do_notify(message):
+    notification.notify(
+                app_name=APPINDICATOR_ID,
+                title="ExpressVpn Status",
+                message=message,
+                app_icon=icon_image, timeout=2
+            )
+    
 class ExpressStatusQT(ExpressStatus):
     def __init__(self):
         # create the gui icon
@@ -23,11 +29,8 @@ class ExpressStatusQT(ExpressStatus):
             self.thread_fun(func)
 
         else:
-            notification.notify(
-                title="ExpressVpn Status",
-                message="It Seems that ExpressVpn-app doesn't Exist on the system",
-                app_icon=icon_image, timeout=2
-            )
+            do_notify("It Seems that ExpressVpn-app doesn't Exist on the system")
+
 
     def check_status(self):
         """This function checks the status of the connection of the app"""
@@ -47,11 +50,7 @@ class ExpressStatusQT(ExpressStatus):
     @staticmethod
     def express_status():
         s = get_status()
-
-        notification.notify(
-            title="ExpressVpn Status",
-            message=s, app_icon=icon_image, timeout=2
-        )
+        do_notify(s)
 
     def main(self):
         self.app = QApplication(sys.argv)

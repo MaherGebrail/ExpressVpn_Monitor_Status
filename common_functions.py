@@ -13,7 +13,7 @@ warnings.filterwarnings('ignore')
 # To Avoid KeyboardInterrupt Error (Not Very Important)
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-APPINDICATOR_ID = 'express'
+APPINDICATOR_ID = 'ExpressVpn Monitor'
 
 used_path = os.path.abspath(os.path.dirname(__file__))
 error_image = os.path.join(used_path, 'wrong.png')
@@ -57,7 +57,7 @@ def get_status():
 
 
 def app_output():
-    return [line.strip().startswith("Connected ") for line in get_status().split('\n')]
+    return [line.lower().strip().startswith("connected ") for line in get_status().split('\n')]
 
 
 def check_display_availability(gui_env_session=['DISPLAY']):

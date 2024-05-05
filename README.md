@@ -4,7 +4,7 @@
 
 - As there is only browser extensions to see the vpn status or the command-line **For linux Users** … Which is painful to keep checking most of the time (if you are suspicious like me :grin:).
 
-- Since I find the browser extensions not the best choice for me. So I find the solution is to keep the status of the app in the tray-bar.
+- Since I find the browser extensions aren't the best choice for me. I find the solution is to keep the status of the app in the tray-bar.
 
 > So HERE We are [I Tried it on **ubuntu** ] ..
 
@@ -35,7 +35,7 @@
 
 > QT version Of The App
 
-``` Since Qt has more support and can work with distributions other than ubuntu, I have added [ ExpressVpn_pyqt.py, requirements.txt, icon.ico ]. ```
+``` Since Qt has more support and can work with distributions other than ubuntu versions that supports ("python3-gi", "gir1.2-appindicator3-0.1"), I have added [ ExpressVpn_pyqt.py, requirements.txt, icon.ico ]. ``` .. And it's now the default option for the installation.
 
 ```install.sh now gives you the choice while running to choose between [gi/QT] versions ```
 

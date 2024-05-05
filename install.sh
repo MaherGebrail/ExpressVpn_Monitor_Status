@@ -8,6 +8,7 @@ check_install () {
 
     if [[ "${response,}" == y* || -z $response ]];then
         sudo mkdir $app_path_name
+        sudo chown -R $USER $app_path_name
     else
         echo "install.sh exited.";
         exit 0;
@@ -17,51 +18,45 @@ check_install () {
 
 # getting the option of app version.
 echo "write from [gi / qt] the version of app you want to install";
-echo "Note: [gi] is the default choice ..".
-read -p "[gi / qt] ? " install_option;
+echo "Note: [qt] is the default choice ..".
+read -p "[gi / QT] ? " install_option;
 
 
-if [[ $install_option == "qt" ]]; then
-    echo "installing QT version.."
-    check_install
-    running_script="ExpressVpn_pyqt.py"
-
-    pip3 install -r requirements.txt
-
-    cp vpn_working.png icon.ico
-    sudo cp ExpressVpn_pyqt.py icon.ico $app_path_name
+if [[ $(python3 -c "import sys; print(sys.argv[1].strip().lower()[:2])" "$install_option") == "gi" ]]; then
 
 # case installing gi version
-else
     echo "installing gi version"
     check_install
     running_script="ExpressVpn_Monitor.py"
+    EXEC_SCRIPT_PATH="$app_path_name/$running_script"
 
     # check if packages exists
-    cat > check_list.py <<EOL
-
-import os
-got = os.popen('apt list --installed').read()
-for i in ["python3-gi", "gir1.2-appindicator3-0.1"]:
-    if i not in got:
-        print('install')
-        break
-
-EOL
-
-    pak=`python3 check_list.py`
-    rm check_list.py
+    pak=$(python3 -c """import os; got = os.popen('apt list --installed 2>/dev/null').read(); print('install' if any([pkg not in got for pkg in ['python3-gi', 'gir1.2-appindicator3-0.1'] ]) else '');""")
 
     if [[ $pak == "install" ]]; then
         sudo apt update && sudo apt install gir1.2-appindicator3-0.1 python3-gi -y
     fi
+else
+    echo "installing QT version.."
+    check_install
+    running_script="ExpressVpn_pyqt.py"
+
+    # create env
+    python3 -m venv --system-site-packages $app_path_name/env
+    source $app_path_name/env/bin/activate
+
+    pip3 install -r requirements.txt
+    EXEC_SCRIPT_PATH="$app_path_name/env/bin/python3 $app_path_name/$running_script"
+    # end of env needed 
+    
+    cp vpn_working.png icon.ico
+    sudo cp ExpressVpn_pyqt.py icon.ico $app_path_name
 
 # Ending (choosing option)
 fi
 
 
 # setting paths
-user_name=`whoami`
 service_file_name="startExpressVpn_Monitor.service"
 
 
@@ -69,13 +64,13 @@ service_file_name="startExpressVpn_Monitor.service"
 sudo cp ExpressVpn_Monitor.py common_functions.py vpn_working.png wrong.png $app_path_name
 
 # checking if the needed systemd dir exists
-if [ ! -d "/home/$user_name/.config/systemd/user" ];then
-    if [ ! -d "/home/$user_name/.config/systemd" ];then
-        mkdir /home/$user_name/.config/systemd
+if [ ! -d "/home/$USER/.config/systemd/user" ];then
+    if [ ! -d "/home/$USER/.config/systemd" ];then
+        mkdir /home/$USER/.config/systemd
         echo "Created ~/.config/systemd"
     fi
 
-	mkdir /home/$user_name/.config/systemd/user
+	mkdir /home/$USER/.config/systemd/user
 	echo "Created ~/.config/systemd/user dir"
 fi
 
@@ -85,7 +80,7 @@ cat > $service_file_name <<EOL
 Description=ExpressVpn Monitoring
 
 [Service]
-ExecStart=$app_path_name/$running_script
+ExecStart=$EXEC_SCRIPT_PATH
 Restart=on-failure
 RestartSec=5s
 
@@ -101,26 +96,26 @@ if [[ `systemctl --user is-active graphical-session.target ` == "active" ]]; the
 fi
 
 # copy service file
-cp $service_file_name /home/$user_name/.config/systemd/user/
+cp $service_file_name /home/$USER/.config/systemd/user/
 
 # make service file executable
-chmod +x /home/$user_name/.config/systemd/user/$service_file_name
+chmod +x /home/$USER/.config/systemd/user/$service_file_name
 
 
 # add service to start on startup apps from user ..> to avoid crashing before loading user gui
-if [ ! -d "/home/$user_name/.config/autostart" ];then
-        mkdir /home/$user_name/.config/autostart
+if [ ! -d "/home/$USER/.config/autostart" ];then
+        mkdir /home/$USER/.config/autostart
         echo "Created ~/.config/autostart"
     fi
 
 chmod +x ExpressVpn_Monitor.desktop
-cp -a ExpressVpn_Monitor.desktop /home/$user_name/.config/autostart/
+cp -a ExpressVpn_Monitor.desktop /home/$USER/.config/autostart/
 sed -i "4d" ExpressVpn_Monitor.desktop
-cp -a ExpressVpn_Monitor.desktop /home/$user_name/.local/share/applications/
+cp -a ExpressVpn_Monitor.desktop /home/$USER/.local/share/applications/
 sed -i "3 a X-GNOME-Autostart-enabled=true" ExpressVpn_Monitor.desktop
 
 sudo chmod +x $app_path_name/*
-sudo chown $user_name $app_path_name/*
+sudo chown -R $USER $app_path_name
 
 # refresh systemctl and run the service
 systemctl --user daemon-reload
