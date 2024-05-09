@@ -98,20 +98,15 @@ fi
 # copy service file
 cp $service_file_name /home/$USER/.config/systemd/user/
 
-# make service file executable
-chmod +x /home/$USER/.config/systemd/user/$service_file_name
-
-
 # add service to start on startup apps from user ..> to avoid crashing before loading user gui
 if [ ! -d "/home/$USER/.config/autostart" ];then
         mkdir /home/$USER/.config/autostart
         echo "Created ~/.config/autostart"
     fi
 
-chmod +x ExpressVpn_Monitor.desktop
-cp -a ExpressVpn_Monitor.desktop /home/$USER/.config/autostart/
+cp  ExpressVpn_Monitor.desktop /home/$USER/.config/autostart/
 sed -i "4d" ExpressVpn_Monitor.desktop
-cp -a ExpressVpn_Monitor.desktop /home/$USER/.local/share/applications/
+cp  ExpressVpn_Monitor.desktop /home/$USER/.local/share/applications/
 sed -i "3 a X-GNOME-Autostart-enabled=true" ExpressVpn_Monitor.desktop
 
 sudo chmod +x $app_path_name/*
